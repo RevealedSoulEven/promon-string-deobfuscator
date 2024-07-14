@@ -1,5 +1,6 @@
 import re
 import os
+import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 array_declared = False
@@ -121,7 +122,10 @@ def deobfuscate(smali):
                     array_declared = False
                     arrayname = ""
 
-                    new_string_ = ret__["result_str"].replace("\n","\\n")
+                    new_string_ = ret__["result_str"]
+                    java_friendly_string = json.dumps(new_string_)
+                    java_friendly_string = java_friendly_string[1:-1]
+                    new_string_ = java_friendly_string
                 else:
                     return smali
     # except:
