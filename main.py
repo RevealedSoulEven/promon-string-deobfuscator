@@ -121,7 +121,7 @@ def deobfuscate(smali):
                     array_declared = False
                     arrayname = ""
 
-                    new_string_ = ret__["result_str"]
+                    new_string_ = ret__["result_str"].replace("\n","\\n")
                 else:
                     return smali
     # except:
@@ -233,7 +233,7 @@ def process_folder(folder, folderout):
                         print(f"Wrote : {output_filepath}")
 
 # Example usage
-folder = "smali3"
+folder = "smali"
 folderout = "smali22"
 process_folder(folder, folderout)
 
