@@ -172,7 +172,7 @@ def deobfuscate(smali):
             
 
 def process_file(filepath):
-    print(filepath)
+    # print(filepath)
     curr_smali = []
     try:
         with open(filepath, "r", encoding="utf-8") as f:
@@ -190,20 +190,28 @@ def process_file(filepath):
 
     for line in curr_smali:
         curr_line += 1
+        
+        my_ops_ = [
+            ".line", "const", "xor-int/lit16", "int-to-char",
+            "aput-char", "aget-char", "Ljava/lang/String", "const/16"
+        ]
         if not found__:
             if "new-array" in line and "[C" in line:
                 start_line = (curr_line - 3) if (curr_line - 3) >= 0 else 0
                 found__ = True
+
+        # skipping if found other opcodes so it may skip some but, who cares?
+        
+        elif all(op_op not in line for op_op in my_ops_) or ".end method" in line:
+            found__ = False
+            start_line = -1
+            print(f"--------------------------------{line}")
         
         elif "Ljava/lang/String;->intern()" in line:
             end_line = curr_line + 2
             new_lines = deobfuscate(curr_smali[start_line:end_line])
             changes.append((start_line, end_line, new_lines))
             found__, start_line, end_line = False, -1, -1
-
-        elif ".end method" in line and found__:
-            found__ = False
-            start_line = -1
 
     for start_line, end_line, new_lines in reversed(changes):
         curr_smali[start_line:end_line] = new_lines
@@ -237,8 +245,8 @@ def process_folder(folder, folderout):
                         print(f"Wrote : {output_filepath}")
 
 # Example usage
-folder = "smali"
-folderout = "smali22"
+folder = "2"
+folderout = "22"
 process_folder(folder, folderout)
 
 
