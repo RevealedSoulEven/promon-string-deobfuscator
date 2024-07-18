@@ -18,6 +18,7 @@ def methodify(st):
     else:
         _oO_ = st.replace("/","_").replace(";","")
         _oO_ = _oO_.replace("$","tempsoul")
+    return _oO_
     
     
 def demethodify(st):
@@ -251,11 +252,13 @@ def deobfuscate_method(smali):
        _______ += i + "\n"
         
     cmds = []
-        
+    with open("temp.py","w") as f:
+        f.write(_______)
     ret__ = {}
     exec(_______, globals(), ret__)
             
     new_string_ = ret__["result_str"]
+    
     java_friendly_string = json.dumps(new_string_)
     java_friendly_string = java_friendly_string[1:-1]
     new_string_ = java_friendly_string
@@ -366,7 +369,7 @@ def process_file(filepath):
         
         my_ops_ = [
             ".line", "const", "xor-int/lit16", "int-to-char",
-            "aput-char", "aget-char", "Ljava/lang/String", "const/16"
+            "aput-char", "aget-char", " Ljava/lang/String", "const/16"
         ]
         
         if not found__:
@@ -399,7 +402,7 @@ def process_file(filepath):
 
             my_ops_ = [
                 "const", "xor-int", "int-to-char",
-                "aput-char", "aget-char", "Ljava/lang/String",
+                "aput-char", "aget-char", " Ljava/lang/String",
                 "sub-int", "add-int", "invoke-", "move-"
             ]
             
@@ -424,9 +427,12 @@ def process_file(filepath):
                         found__confirm = False
 
                 elif "Ljava/lang/String;->intern()" in line and found__confirm:
-                    end_line = curr_line + 2               
-                    new_lines = deobfuscate_method(curr_smali[start_line:end_line])
-                    changes.append((start_line, end_line, new_lines))
+                    end_line = curr_line + 2
+                    try:
+                        new_lines = deobfuscate_method(curr_smali[start_line:end_line])
+                        changes.append((start_line, end_line, new_lines))
+                    except:
+                        pass
                     found__, is_method, start_line, end_line = False, False, -1, -1
                     found__confirm = False
 
@@ -477,7 +483,7 @@ def process_folder(folder, folderout):
                         print(f"Wrote : {output_filepath}")
 
 # Example usage
-folder = "c"
+folder = "classes"
 folderout = "classes_dec"
 process_folder(folder, folderout)
 
