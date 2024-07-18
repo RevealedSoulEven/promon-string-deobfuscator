@@ -14,12 +14,14 @@ def methodify(st):
     if "->" in st:
         ## method
         owch = st.split(";->")
-        return f"{owch[0].replace('/','_')}_{owch[1].replace('(I)[C','')}"
-    return st.replace("/","_").replace(";","")
+        _oO_ = f"{owch[0].replace('/','_')}_{owch[1].replace('(I)[C','')}"
+    else:
+        _oO_ = st.replace("/","_").replace(";","")
+        _oO_ = _oO_.replace("$","tempsoul")
     
     
 def demethodify(st):
-    return st.replace('_','/')
+    return st.replace('_','/').replace('tempsoul','$')
 
 
 def combine(source):
@@ -216,7 +218,9 @@ def deobfuscate(smali, is_method):
 def deobfuscate_method(smali):
     global array_declared, arrayname, cmds, method_name, method_para, available_methods, curr_class
     
-    cmds.append("import tempsouleven")
+    with open("tempsouleven.py") as f:
+        for i in f.readlines():
+            cmds.append(i)
     
     for index in range(len(smali)):
         line = smali[index]
@@ -239,7 +243,7 @@ def deobfuscate_method(smali):
             #got calling method
             last_var_ = cmds[-1].split(" ")[2]
             method__ = methodify(line.split(" ")[-1])
-            cmds.append(f"result_str = tempsouleven.{method__}({last_var_})")
+            cmds.append(f"result_str = {method__}({last_var_})")
             
         
     _______ = ""
@@ -473,7 +477,7 @@ def process_folder(folder, folderout):
                         print(f"Wrote : {output_filepath}")
 
 # Example usage
-folder = "classes"
+folder = "c"
 folderout = "classes_dec"
 process_folder(folder, folderout)
 
