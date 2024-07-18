@@ -319,6 +319,9 @@ def process_file(filepath):
             "xor-int"    ## for methods
         ]
         
+        if ".class" in line:
+            curr_class = methodify(line.split()[-1])
+        
         if not found__:
             if line.startswith(".method") and line.endswith("(I)[C"):
                 is_method = True
@@ -357,9 +360,6 @@ def process_file(filepath):
     for line in curr_smali:
         curr_line += 1
         
-        if ".class" in line:
-            curr_class = methodify(line.split()[-1])
-        
         my_ops_ = [
             ".line", "const", "xor-int/lit16", "int-to-char",
             "aput-char", "aget-char", "Ljava/lang/String", "const/16"
@@ -392,9 +392,6 @@ def process_file(filepath):
         ## means methods exist
         for line in curr_smali:
             curr_line += 1
-
-            if ".class" in line:
-                curr_class = methodify(line.split()[-1])
 
             my_ops_ = [
                 "const", "xor-int", "int-to-char",
