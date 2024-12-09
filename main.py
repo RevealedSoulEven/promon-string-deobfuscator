@@ -456,34 +456,76 @@ def process_file(filepath):
 
 
 
+# def process_folder(folder, folderout):
+#     for root, dirs, files in os.walk(folder):
+#         for file in files:
+#             if file.endswith(".smali"):
+#                 input_filepath = os.path.join(root, file)
+                
+#                 relative_path = os.path.relpath(input_filepath, folder)
+#                 output_filepath = os.path.join(folderout, relative_path)
+#                 if os.path.exists(output_filepath):
+#                     print(f"File {output_filepath} already exists. Skipping.")
+#                 else:
+#                     os.makedirs(os.path.dirname(output_filepath), exist_ok=True)
+                    
+#                     new_lines, error = process_file(input_filepath)
+                    
+#                     if error:
+#                         # Copy the original file to the output directory
+#                         shutil.copyfile(input_filepath, output_filepath)
+#                         print(f"Error processing {input_filepath}: {error}. Copied original file.")
+#                     elif new_lines:
+#                         # Write the modified lines to the output file
+#                         with open(output_filepath, "w", encoding="utf-8") as f:
+#                             for line in new_lines:
+#                                 f.write(line + "\n")
+#                         print(f"Wrote : {output_filepath}")
+
+
+
+
+from tqdm import tqdm
+
 def process_folder(folder, folderout):
+    all_files = []
+    
+    # Collect all the files to process
     for root, dirs, files in os.walk(folder):
         for file in files:
             if file.endswith(".smali"):
-                input_filepath = os.path.join(root, file)
-                
-                relative_path = os.path.relpath(input_filepath, folder)
-                output_filepath = os.path.join(folderout, relative_path)
-                if os.path.exists(output_filepath):
-                    print(f"File {output_filepath} already exists. Skipping.")
-                else:
-                    os.makedirs(os.path.dirname(output_filepath), exist_ok=True)
-                    
-                    new_lines, error = process_file(input_filepath)
-                    
-                    if error:
-                        # Copy the original file to the output directory
-                        shutil.copyfile(input_filepath, output_filepath)
-                        print(f"Error processing {input_filepath}: {error}. Copied original file.")
-                    elif new_lines:
-                        # Write the modified lines to the output file
-                        with open(output_filepath, "w", encoding="utf-8") as f:
-                            for line in new_lines:
-                                f.write(line + "\n")
-                        print(f"Wrote : {output_filepath}")
+                all_files.append(os.path.join(root, file))
+    
+    # Wrap the file processing loop with tqdm
+    with tqdm(total=len(all_files), desc="Processing files", unit="file") as pbar:
+        for input_filepath in all_files:
+            relative_path = os.path.relpath(input_filepath, folder)
+            output_filepath = os.path.join(folderout, relative_path)
+            if os.path.exists(output_filepath):
+                print(f"File {output_filepath} already exists. Skipping.")
+            else:
+                os.makedirs(os.path.dirname(output_filepath), exist_ok=True)
+                new_lines, error = process_file(input_filepath)
+
+                if error:
+                    # Copy the original file to the output directory
+                    shutil.copyfile(input_filepath, output_filepath)
+                    print(f"Error processing {input_filepath}: {error}. Copied original file.")
+                elif new_lines:
+                    # Write the modified lines to the output file
+                    with open(output_filepath, "w", encoding="utf-8") as f:
+                        for line in new_lines:
+                            f.write(line + "\n")
+                    pbar.set_postfix({"last_written": output_filepath})
+                # Update the progress bar regardless of action
+                pbar.update(1)
+
+
+
+
 
 # Example usage
-folder = "classes"
+folder = "out"
 folderout = "classes_dec"
 process_folder(folder, folderout)
 
