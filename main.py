@@ -1,5 +1,6 @@
 import os
 import json
+import shutil
 
 array_declared = False
 arrayname = ""

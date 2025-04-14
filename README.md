@@ -1,8 +1,9 @@
 # Promon Shield String Deobfuscator
 
 This project is used to decrypt dex strings for Promon Shield protected-apps.
+Making the apps easier for static analysis.
 
-✨<b>[NEW] Now it can decrypt</b> the strings which are passed to the functions at runtime (dynamically) but almost every string in dex is getting decrypted.
+✨<b>[NEW] Now it can decrypt</b> the strings which are passed to the functions at runtime (dynamically) and almost every string in dex is getting decrypted.
 
 
 
