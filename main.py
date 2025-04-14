@@ -187,6 +187,10 @@ def deobfuscate(smali, is_method):
                     
 
                     new_string_ = ret__["result_str"]
+                    
+                    # print(new_string_)    # to check whether it is getting decrypted strings or not
+                    
+                    
                     java_friendly_string = json.dumps(new_string_)
                     java_friendly_string = java_friendly_string[1:-1]
                     new_string_ = java_friendly_string
@@ -220,10 +224,30 @@ def deobfuscate(smali, is_method):
 def deobfuscate_method(smali):
     global array_declared, arrayname, cmds, method_name, method_para, available_methods, curr_class
     
-    with open("tempsouleven.py") as f:
-        for i in f.readlines():
-            cmds.append(i)
     
+    called_method = None
+    for line in smali:
+        if "invoke-" in line and "(I)[C" in line:
+            called_method = methodify(line.split()[-1])
+            break
+        
+    
+    if called_method and os.path.exists("tempsouleven.py"):
+        with open("tempsouleven.py") as f:
+            method_code = []
+            in_target_method = False
+            for line in f.readlines():
+                if line.startswith(f"def {called_method}("):
+                    in_target_method = True
+                    method_code.append(line)
+                elif in_target_method:
+                    if line.startswith("def "):
+                        # Reached next method or empty line (end of current method)
+                        break
+                    method_code.append(line)
+            cmds.extend(method_code)
+    
+
     for index in range(len(smali)):
         line = smali[index]
         op__ = line.split(" ")
@@ -264,6 +288,7 @@ def deobfuscate_method(smali):
     java_friendly_string = java_friendly_string[1:-1]
     new_string_ = java_friendly_string
        
+    os.remove("temp.py")
        
     try:
         new_lines = []
@@ -517,7 +542,7 @@ def process_folder(folder, folderout):
                     with open(output_filepath, "w", encoding="utf-8") as f:
                         for line in new_lines:
                             f.write(line + "\n")
-                    pbar.set_postfix({"last_written": output_filepath})
+                    # pbar.set_postfix({"last_written": output_filepath})
                 # Update the progress bar regardless of action
                 pbar.update(1)
 

@@ -3,6 +3,8 @@
 This project is used to decrypt dex strings for Promon Shield protected-apps.
 Making the apps easier for static analysis.
 
+✨<b>[NEW] More Speed.</b> Optimised the code for 10X+ performance speed.
+
 ✨<b>[NEW] Now it can decrypt</b> the strings which are passed to the functions at runtime (dynamically) and almost every string in dex is getting decrypted.
 
 
@@ -20,7 +22,8 @@ Just because I couldn't bypass Frida detection because I'm a noob, so I did this
 
 ## Installation
 
-Get the smali folder using [Smali](https://github.com/JesusFreke/smali) and then open the Python script and add the name of the folder at the end of the script. 
-Save and RUN!
+Get the smali folder using [Smali](https://github.com/JesusFreke/smali) and then open the Python script and add the name of the folder at the end of the script.
+Save and RUN !!!
+Use a single classes.dex at a time.
 
 Happy Reversing 😉
