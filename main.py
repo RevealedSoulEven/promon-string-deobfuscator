@@ -257,7 +257,10 @@ def deobfuscate_method(smali):
             cmds.append(f"{op__[1].replace(',','')} = {op__[2]}")
                 
         if "sub-int" in line:
-            cmds.append(f"{op__[1].replace(',','')} = {op__[2].replace(',','')} - {op__[3]}")
+            if "rsub" in line:
+                cmds.append(f"{op__[1].replace(',','')} = {op__[3]} - {op__[2].replace(',','')}")
+            else:
+                cmds.append(f"{op__[1].replace(',','')} = {op__[2].replace(',','')} - {op__[3]}")
                 
         if "add-int" in line:
             cmds.append(f"{op__[1].replace(',','')} = {op__[2].replace(',','')} + {op__[3]}")
