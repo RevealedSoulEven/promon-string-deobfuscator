@@ -1,4 +1,4 @@
-# Promon Shield String Deobfuscator
+# Promon Shield String Deobfuscator ( string.intern() )
 
 This project is used to decrypt dex strings for Promon Shield protected-apps.
 Making the apps easier for static analysis.
