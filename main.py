@@ -10,6 +10,7 @@ method_para = ""
 curr_class = ""
 available_methods = []
 
+print("my name")
 
 def methodify(st):
     if "->" in st:
