@@ -22,9 +22,9 @@ Just because I couldn't bypass Frida detection because I'm a noob, so I did this
 
 ## Installation
 
-Get the smali folder using [Smali](https://bitbucket.org/JesusFreke/smali/downloads/smali-2.5.2.jar) ([source](https://github.com/JesusFreke/smali)) and then open the Python script and add the name of the folder at the end of the script.
-Save and RUN !!!
-Use a single classes.dex at a time.
+Get the smali folder using [Smali](https://bitbucket.org/JesusFreke/smali/downloads/smali-2.5.2.jar) ([source](https://github.com/JesusFreke/smali)) and then open the Python script and add the name of the folder at the end of the script.<br>
+Save and RUN !!!<br>
+Use a single classes.dex at a time.<br>
 After deobfuscation is completed, use [Baksmali](https://bitbucket.org/JesusFreke/smali/downloads/baksmali-2.5.0.jar) ([source](https://github.com/JesusFreke/smali)) and convert the smali folders back to classes.dex
 
 Happy Reversing 😉
