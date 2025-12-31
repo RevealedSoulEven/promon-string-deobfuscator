@@ -2,10 +2,13 @@ import os
 import json
 import shutil
 from tqdm import tqdm
+from colorama import Fore, Style, init
+
 import multiprocessing
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
+init(autoreset=True)
 array_declared = False
 arrayname = ""
 cmds = []
@@ -387,7 +390,7 @@ def process_file(filepath):
 
             if all(op_op not in line for op_op in method_ops_):
                 found__, is_method, start_line, end_line = False, False, -1, -1
-                print(f"----------x---------------------{line}")
+                # print(f"----------x---------------------{line}")
 
             elif "return-object" in line:
                 try:
@@ -532,58 +535,19 @@ def process_folder(folder, folderout):
     with ProcessPoolExecutor(max_workers=cpu_count) as executor:
         futures = [executor.submit(_worker, task) for task in tasks]
 
-        with tqdm(total=len(futures), desc="Processing smali", unit="file") as pbar:
+        with tqdm(
+            total=len(futures),
+            desc=Fore.CYAN + "Decrypting smali",
+            unit="file",
+            bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}"
+        ) as pbar:
             for future in as_completed(futures):
                 _ = future.result()
                 pbar.update(1)
 
 
-
-
-
-# Example usage
-folder = "out"
-folderout = "classes_dec"
-
-if __name__ == "__main__":
-    process_folder(folder, folderout)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    print("""
+def banner():
+    print(Fore.CYAN + Style.BRIGHT + """
 
     ██████╗░███████╗██╗░░░██╗███████╗░█████╗░██╗░░░░░███████╗██████╗░
     ██╔══██╗██╔════╝██║░░░██║██╔════╝██╔══██╗██║░░░░░██╔════╝██╔══██╗
@@ -598,6 +562,110 @@ if __name__ == "__main__":
     ░╚═══██╗██║░░██║██║░░░██║██║░░░░░██╔══╝░░░╚████╔╝░██╔══╝░░██║╚████║
     ██████╔╝╚█████╔╝╚██████╔╝███████╗███████╗░░╚██╔╝░░███████╗██║░╚███║
     ╚═════╝░░╚════╝░░╚═════╝░╚══════╝╚══════╝░░░╚═╝░░░╚══════╝╚═╝░░╚══╝
+    """ + Style.RESET_ALL)
 
-    """)
+    print(
+        Fore.MAGENTA + Style.BRIGHT +
+        "        ▓▒░  Promon Shield String Deobfuscator Tool  ░▒▓\n" +
+        Style.RESET_ALL
+    )
 
+
+
+
+import argparse
+import subprocess
+import glob
+
+def find_jar(prefix):
+    jars = glob.glob(f"{prefix}*.jar")
+    if not jars:
+        raise FileNotFoundError(f"{prefix}*.jar not found")
+    return jars[0]
+
+APKTOOL_JAR = find_jar("apktool")
+
+def run(cmd, cwd=None, title=None):
+    if title:
+        print(Fore.GREEN + Style.BRIGHT + f"\n[+] {title}\n")
+
+    p = subprocess.Popen(
+        cmd,
+        cwd=cwd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True
+    )
+
+    for line in p.stdout:
+        if line.startswith("I:"):
+            print(Fore.BLACK + Style.BRIGHT + line.strip())
+        elif line.startswith("W:"):
+            print(Fore.YELLOW + line.strip())
+        elif line.startswith("E:"):
+            print(Fore.RED + line.strip())
+        else:
+            print(Fore.WHITE + line.strip())
+
+    p.wait()
+    if p.returncode != 0:
+        raise subprocess.CalledProcessError(p.returncode, cmd)
+
+def decrypt_apk(apk_path, out_apk):
+    apk_path = os.path.abspath(apk_path)
+    base = os.getcwd()
+    workdir = os.path.join(base, "apktool_work")
+    decoded = os.path.join(workdir, "decoded")
+
+    if os.path.exists(workdir):
+        print(Fore.YELLOW + "[*] Removing old apktool_work folder")
+        shutil.rmtree(workdir)
+
+    os.makedirs(workdir, exist_ok=True)
+
+    run(
+        ["java", "-jar", APKTOOL_JAR, "d", "-f", apk_path, "-o", decoded],
+        title="Decompiling APK"
+    )
+
+    smali_dirs = [
+        d for d in os.listdir(decoded)
+        if d == "smali" or d.startswith("smali_classes")
+    ]
+
+    print(Fore.CYAN + f"\n[+] Found {len(smali_dirs)} smali folders\n")
+
+    for sdir in smali_dirs:
+        src = os.path.join(decoded, sdir)
+        tmp = src + "_dec"
+
+        print(Fore.YELLOW + f"\n[*] Decrypting {sdir}")
+        process_folder(src, tmp)
+
+        shutil.rmtree(src)
+        os.rename(tmp, src)
+
+    run(
+        ["java", "-jar", APKTOOL_JAR, "b", decoded, "-o", out_apk],
+        title="Rebuilding APK"
+    )
+
+    print(Fore.GREEN + Style.BRIGHT + f"\n[✓] Output APK: {out_apk}")
+
+
+
+
+
+def main():
+    banner()
+
+    p = argparse.ArgumentParser()
+    p.add_argument("-a", "--apk", required=True)
+    p.add_argument("-o", "--out", required=True)
+    args = p.parse_args()
+
+    decrypt_apk(args.apk, args.out)
+
+
+if __name__ == "__main__":
+    main()

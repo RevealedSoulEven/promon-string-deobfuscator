@@ -1,30 +1,109 @@
-# Promon Shield String Deobfuscator ( string.intern() )
+# 🛡️ Promon Shield String Deobfuscator
 
-This project is used to decrypt dex strings for Promon Shield protected-apps.
-Making the apps easier for static analysis.
+A fast and practical tool to **decrypt string obfuscation used by Promon Shield–protected Android apps**, making static analysis significantly easier.
 
-✨<b>[NEW] More Speed.</b> Optimised the code for 10X+ performance speed.
+This tool works by **parsing smali opcode patterns** and **reconstructing runtime string logic**, allowing decryption of both **static and dynamically passed strings**.
 
-✨<b>[NEW] Now it can decrypt</b> the strings which are passed to the functions at runtime (dynamically) and almost every string in dex is getting decrypted.
+---
+
+## ✨ Features
+
+- 🚀 **10x+ faster** than earlier versions (heavily optimized)
+- 🔓 Decrypts **`String.intern()`-based obfuscation**
+- 🧠 Handles **runtime / dynamically passed strings**
+- 📦 Works directly on **APK files**
 
 
+---
 
-Working is quite simple, just reading the smali patterns and opcodes (which I added) and then decrypts them using some logic.
-I request contributors to please add new features. Thank you in advance. ILY <3
+## 🧩 How It Works
 
-## Why?
+1. Uses **apktool** to decompile APK into smali
+2. Scans smali for known **Promon Shield string patterns**
+3. Reconstructs string logic using Python
+4. Replaces encrypted strings with decrypted constants
+5. Rebuilds the APK using apktool
 
-Just because I couldn't bypass Frida detection because I'm a noob, so I did this.
 
-## Credits
+---
 
-- Me
+## 📦 Requirements
 
-## Installation
+- Python **3.8+**
+- Java **8+** (required for apktool)
 
-Get the smali folder using [Smali](https://bitbucket.org/JesusFreke/smali/downloads/smali-2.5.2.jar) ([source](https://github.com/JesusFreke/smali)) and then open the Python script and add the name of the folder at the end of the script.<br>
-Save and RUN !!!<br>
-Use a single classes.dex at a time.<br>
-After deobfuscation is completed, use [Baksmali](https://bitbucket.org/JesusFreke/smali/downloads/baksmali-2.5.0.jar) ([source](https://github.com/JesusFreke/smali)) and convert the smali folders back to classes.dex
+You must download [**apktool JAR**](https://github.com/iBotPeaches/Apktool/releases) and place it **in the same folder as the script**.
+
+⚠️ **Important**:  
+&nbsp;&nbsp;&nbsp;&nbsp;The jar **must be in the same directory** as `main.py`.
+
+
+---
+
+Install dependencies:
+```bash
+pip install -r requirements.txt
+````
+
+---
+
+## 🚀 Usage
+
+### Simply use
+
+```bash
+python main.py -a target.apk -o deobfuscated.apk
+```
+
+### Help
+
+```
+python main.py --help
+```
+
+---
+
+
+## 🧠 Why?
+
+> Just because I couldn’t bypass Frida detection and decided to do this instead 😄<br>
+> I'm a noobie script kiddie :(
+
+---
+
+## 🧪 Use Cases
+
+* Reverse engineering Promon-protected apps
+* Static analysis without runtime instrumentation
+* Understanding app logic hidden behind encrypted strings
+* Malware research / security analysis
+
+---
+
+## ⚠️ Disclaimer
+
+This project is intended **for educational and research purposes only**.
+Use it only on apps you own or have permission to analyze.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome!
+
+If you discover:
+
+* New string patterns
+* New opcode flows
+* Performance improvements
+
+Please submit a PR 🙏
+ILY <3
+
+---
+
+## 👤 Credits
+
+* **Me**
 
 Happy Reversing 😉
