@@ -1,6 +1,10 @@
 import os
 import json
 import shutil
+from tqdm import tqdm
+import multiprocessing
+from concurrent.futures import ProcessPoolExecutor, as_completed
+
 
 array_declared = False
 arrayname = ""
@@ -10,6 +14,10 @@ method_para = ""
 curr_class = ""
 available_methods = []
 
+
+
+def get_temp_file():
+    return f"tempsouleven_{os.getpid()}.py"
 
 def methodify(st):
     if "->" in st:
@@ -232,8 +240,8 @@ def deobfuscate_method(smali):
             break
         
     
-    if called_method and os.path.exists("tempsouleven.py"):
-        with open("tempsouleven.py") as f:
+    if called_method and os.path.exists(get_temp_file()):
+        with open(get_temp_file()) as f:
             method_code = []
             in_target_method = False
             for line in f.readlines():
@@ -374,7 +382,7 @@ def process_file(filepath):
 
             if not is_temp_written:
                 is_temp_written = True
-                with open("tempsouleven.py","w") as f:
+                with open(get_temp_file(),"w") as f:
                     f.write("")
 
             if all(op_op not in line for op_op in method_ops_):
@@ -385,7 +393,7 @@ def process_file(filepath):
                 try:
                     end_line = curr_line + 1
                     method_cmds = deobfuscate(curr_smali[start_line:end_line], True)
-                    with open("tempsouleven.py","a") as f:
+                    with open(get_temp_file(),"a") as f:
                         f.write(method_cmds)
                     found__, is_method, start_line, end_line = False, False, -1, -1
                 except:
@@ -474,7 +482,7 @@ def process_file(filepath):
         curr_smali[start_line:end_line] = new_lines
 
     if is_temp_written:
-        os.remove("tempsouleven.py")
+        os.remove(get_temp_file())
     available_methods = []
     return curr_smali, None
 
@@ -483,70 +491,50 @@ def process_file(filepath):
 
 
 
+def _worker(args):
+    input_filepath, folder, folderout = args
 
+    relative_path = os.path.relpath(input_filepath, folder)
+    output_filepath = os.path.join(folderout, relative_path)
 
-# def process_folder(folder, folderout):
-#     for root, dirs, files in os.walk(folder):
-#         for file in files:
-#             if file.endswith(".smali"):
-#                 input_filepath = os.path.join(root, file)
-                
-#                 relative_path = os.path.relpath(input_filepath, folder)
-#                 output_filepath = os.path.join(folderout, relative_path)
-#                 if os.path.exists(output_filepath):
-#                     print(f"File {output_filepath} already exists. Skipping.")
-#                 else:
-#                     os.makedirs(os.path.dirname(output_filepath), exist_ok=True)
-                    
-#                     new_lines, error = process_file(input_filepath)
-                    
-#                     if error:
-#                         # Copy the original file to the output directory
-#                         shutil.copyfile(input_filepath, output_filepath)
-#                         print(f"Error processing {input_filepath}: {error}. Copied original file.")
-#                     elif new_lines:
-#                         # Write the modified lines to the output file
-#                         with open(output_filepath, "w", encoding="utf-8") as f:
-#                             for line in new_lines:
-#                                 f.write(line + "\n")
-#                         print(f"Wrote : {output_filepath}")
+    if os.path.exists(output_filepath):
+        return None
 
+    os.makedirs(os.path.dirname(output_filepath), exist_ok=True)
 
+    new_lines, error = process_file(input_filepath)
 
+    if error:
+        shutil.copyfile(input_filepath, output_filepath)
+        return f"copied: {relative_path}"
 
-from tqdm import tqdm
+    if new_lines:
+        with open(output_filepath, "w", encoding="utf-8") as f:
+            f.write("\n".join(new_lines))
+
+    return relative_path
+
 
 def process_folder(folder, folderout):
     all_files = []
-    
-    # Collect all the files to process
     for root, dirs, files in os.walk(folder):
         for file in files:
             if file.endswith(".smali"):
                 all_files.append(os.path.join(root, file))
-    
-    # Wrap the file processing loop with tqdm
-    with tqdm(total=len(all_files), desc="Processing files", unit="file") as pbar:
-        for input_filepath in all_files:
-            relative_path = os.path.relpath(input_filepath, folder)
-            output_filepath = os.path.join(folderout, relative_path)
-            if os.path.exists(output_filepath):
-                print(f"File {output_filepath} already exists. Skipping.")
-            else:
-                os.makedirs(os.path.dirname(output_filepath), exist_ok=True)
-                new_lines, error = process_file(input_filepath)
 
-                if error:
-                    # Copy the original file to the output directory
-                    shutil.copyfile(input_filepath, output_filepath)
-                    print(f"Error processing {input_filepath}: {error}. Copied original file.")
-                elif new_lines:
-                    # Write the modified lines to the output file
-                    with open(output_filepath, "w", encoding="utf-8") as f:
-                        for line in new_lines:
-                            f.write(line + "\n")
-                    # pbar.set_postfix({"last_written": output_filepath})
-                # Update the progress bar regardless of action
+    os.makedirs(folderout, exist_ok=True)
+
+    cpu_count = multiprocessing.cpu_count()
+    print(f"[+] Using {cpu_count} CPU cores")
+
+    tasks = [(fp, folder, folderout) for fp in all_files]
+
+    with ProcessPoolExecutor(max_workers=cpu_count) as executor:
+        futures = [executor.submit(_worker, task) for task in tasks]
+
+        with tqdm(total=len(futures), desc="Processing smali", unit="file") as pbar:
+            for future in as_completed(futures):
+                _ = future.result()
                 pbar.update(1)
 
 
@@ -556,7 +544,9 @@ def process_folder(folder, folderout):
 # Example usage
 folder = "out"
 folderout = "classes_dec"
-process_folder(folder, folderout)
+
+if __name__ == "__main__":
+    process_folder(folder, folderout)
 
 
 
@@ -592,21 +582,22 @@ process_folder(folder, folderout)
 
 
 
-print("""
 
-██████╗░███████╗██╗░░░██╗███████╗░█████╗░██╗░░░░░███████╗██████╗░
-██╔══██╗██╔════╝██║░░░██║██╔════╝██╔══██╗██║░░░░░██╔════╝██╔══██╗
-██████╔╝█████╗░░╚██╗░██╔╝█████╗░░███████║██║░░░░░█████╗░░██║░░██║
-██╔══██╗██╔══╝░░░╚████╔╝░██╔══╝░░██╔══██║██║░░░░░██╔══╝░░██║░░██║
-██║░░██║███████╗░░╚██╔╝░░███████╗██║░░██║███████╗███████╗██████╔╝
-╚═╝░░╚═╝╚══════╝░░░╚═╝░░░╚══════╝╚═╝░░╚═╝╚══════╝╚══════╝╚═════╝░
+    print("""
 
-░██████╗░█████╗░██╗░░░██╗██╗░░░░░███████╗██╗░░░██╗███████╗███╗░░██╗
-██╔════╝██╔══██╗██║░░░██║██║░░░░░██╔════╝██║░░░██║██╔════╝████╗░██║
-╚█████╗░██║░░██║██║░░░██║██║░░░░░█████╗░░╚██╗░██╔╝█████╗░░██╔██╗██║
-░╚═══██╗██║░░██║██║░░░██║██║░░░░░██╔══╝░░░╚████╔╝░██╔══╝░░██║╚████║
-██████╔╝╚█████╔╝╚██████╔╝███████╗███████╗░░╚██╔╝░░███████╗██║░╚███║
-╚═════╝░░╚════╝░░╚═════╝░╚══════╝╚══════╝░░░╚═╝░░░╚══════╝╚═╝░░╚══╝
+    ██████╗░███████╗██╗░░░██╗███████╗░█████╗░██╗░░░░░███████╗██████╗░
+    ██╔══██╗██╔════╝██║░░░██║██╔════╝██╔══██╗██║░░░░░██╔════╝██╔══██╗
+    ██████╔╝█████╗░░╚██╗░██╔╝█████╗░░███████║██║░░░░░█████╗░░██║░░██║
+    ██╔══██╗██╔══╝░░░╚████╔╝░██╔══╝░░██╔══██║██║░░░░░██╔══╝░░██║░░██║
+    ██║░░██║███████╗░░╚██╔╝░░███████╗██║░░██║███████╗███████╗██████╔╝
+    ╚═╝░░╚═╝╚══════╝░░░╚═╝░░░╚══════╝╚═╝░░╚═╝╚══════╝╚══════╝╚═════╝░
 
-""")
+    ░██████╗░█████╗░██╗░░░██╗██╗░░░░░███████╗██╗░░░██╗███████╗███╗░░██╗
+    ██╔════╝██╔══██╗██║░░░██║██║░░░░░██╔════╝██║░░░██║██╔════╝████╗░██║
+    ╚█████╗░██║░░██║██║░░░██║██║░░░░░█████╗░░╚██╗░██╔╝█████╗░░██╔██╗██║
+    ░╚═══██╗██║░░██║██║░░░██║██║░░░░░██╔══╝░░░╚████╔╝░██╔══╝░░██║╚████║
+    ██████╔╝╚█████╔╝╚██████╔╝███████╗███████╗░░╚██╔╝░░███████╗██║░╚███║
+    ╚═════╝░░╚════╝░░╚═════╝░╚══════╝╚══════╝░░░╚═╝░░░╚══════╝╚═╝░░╚══╝
+
+    """)
 
